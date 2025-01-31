@@ -29,7 +29,7 @@ class CharacterInfoTile extends StatelessWidget {
 
     final effectiveDateOfBirth = dateOfBirth != null
         ? DateFormat(DateFormat.YEAR_MONTH_DAY).format(character.dateOfBirth!)
-        : 'Unknown';
+        : '';
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -86,10 +86,13 @@ class _CharacterInfoTileItem extends StatelessWidget {
   const _CharacterInfoTileItem({
     required this.label,
     required this.value,
+    this.emptyValue = '-',
   });
 
   final String label;
   final String value;
+
+  final String emptyValue;
 
   @override
   Widget build(BuildContext context) {
@@ -103,7 +106,7 @@ class _CharacterInfoTileItem extends StatelessWidget {
             style: textTheme.bodyLarge,
           ),
           TextSpan(
-            text: value,
+            text: value.isEmpty ? emptyValue : value,
             style: textTheme.bodyLarge?.copyWith(
               fontWeight: FontWeight.w700,
             ),

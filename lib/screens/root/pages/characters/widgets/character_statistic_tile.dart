@@ -58,6 +58,7 @@ class CharacterStatisticTile extends StatelessWidget {
             ),
           Icon(
             isGuessed ? Icons.check : Icons.close,
+            color: isGuessed ? Colors.green : Colors.red,
           ),
         ],
       ),

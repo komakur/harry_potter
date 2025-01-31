@@ -84,7 +84,7 @@ class GuessCharacterHouseBloc
     }
 
     print(oldStatistics[particularCharacterStatisticsIndex]);
-    emit(GuessCharacterHouseState(guessesStatistics: oldStatistics));
+    emit(state.copyWith(guessesStatistics: oldStatistics));
   }
 
   bool _isGuessSuccessful(
