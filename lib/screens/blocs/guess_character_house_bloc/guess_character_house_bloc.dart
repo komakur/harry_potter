@@ -30,6 +30,25 @@ class GuessCharacterHouseBloc
     });
   }
 
+  GuessCharacterHouseState onStateChanged(GuessCharacterHouseState state) {
+    var visibleData = state.guessesStatistics;
+
+    final searchQuery = state.searchQuery;
+
+    if (searchQuery.isNotEmpty) {
+      final regExp = RegExp(
+        searchQuery,
+        caseSensitive: false,
+      );
+
+      visibleData = state.guessesStatistics
+          .where((statistic) => regExp.hasMatch(statistic.character.name))
+          .toList();
+    }
+
+    return state.copyWith(visibleGuessesStatistics: visibleData);
+  }
+
   void guessHouse({
     required Character character,
     required HogwartsHouse? house,
@@ -46,45 +65,39 @@ class GuessCharacterHouseBloc
     _GuessCharacterHouse event,
     Emitter<GuessCharacterHouseState> emit,
   ) {
-    final oldStatistics = state.guessesStatistics.toList();
+    final updatedStatistics = state.guessesStatistics.toList();
 
-    var particularCharacterStatisticsIndex = oldStatistics.indexWhere(
-      (statistics) => statistics.character.id == event.character.id,
+    // Find existing character statistics
+    var index = updatedStatistics.indexWhere(
+      (stats) => stats.character.id == event.character.id,
     );
 
-    final statisticsExists = particularCharacterStatisticsIndex != -1;
-
-    if (!statisticsExists) {
-      oldStatistics.add(GuessStatistics(character: event.character));
-
-      particularCharacterStatisticsIndex = oldStatistics.length - 1;
+    // If not found, add new entry
+    if (index == -1) {
+      updatedStatistics.add(GuessStatistics(character: event.character));
+      index = updatedStatistics.length - 1;
     }
 
-    final particularCharacterStatistics =
-        oldStatistics[particularCharacterStatisticsIndex];
+    final currentStats = updatedStatistics[index];
 
-    // guess is successful
-    if (_isGuessSuccessful(event.character.house, event.house)) {
-      oldStatistics[particularCharacterStatisticsIndex] =
-          particularCharacterStatistics
-              .copyWith(
-                successCount: particularCharacterStatistics.successCount + 1,
-              )
-              .copyWith(
-                beforeFirstSuccessCount:
-                    particularCharacterStatistics.beforeFirstSuccessCount ??
-                        particularCharacterStatistics.total,
-              );
-    } // guess is failed
-    else {
-      oldStatistics[particularCharacterStatisticsIndex] =
-          particularCharacterStatistics.copyWith(
-        failureCount: particularCharacterStatistics.failureCount + 1,
-      );
-    }
+    // Determine if the guess was successful
+    final isSuccess = _isGuessSuccessful(event.character.house, event.house);
 
-    print(oldStatistics[particularCharacterStatisticsIndex]);
-    emit(state.copyWith(guessesStatistics: oldStatistics));
+    updatedStatistics[index] = currentStats.copyWith(
+      successCount:
+          isSuccess ? currentStats.successCount + 1 : currentStats.successCount,
+      failureCount:
+          isSuccess ? currentStats.failureCount : currentStats.failureCount + 1,
+      beforeFirstSuccessCount:
+          isSuccess && currentStats.beforeFirstSuccessCount == null
+              ? currentStats.total
+              : currentStats.beforeFirstSuccessCount,
+    );
+
+    // Emit updated state
+    emit(onStateChanged(state.copyWith(
+      guessesStatistics: updatedStatistics,
+    )));
   }
 
   bool _isGuessSuccessful(
@@ -104,24 +117,10 @@ class GuessCharacterHouseBloc
     _SearchCharacterStatistic event,
     Emitter<GuessCharacterHouseState> emit,
   ) {
-    final regExp = RegExp(
-      event.characterName,
-      caseSensitive: false,
-    );
-
-    var searchedStatistic = state.guessesStatistics
-        .where((statistic) => regExp.hasMatch(statistic.character.name))
-        .toList();
-
-    if (event.characterName.isEmpty) {
-      searchedStatistic = state.guessesStatistics;
-    }
-
-    emit(
+    emit(onStateChanged(
       state.copyWith(
         searchQuery: event.characterName,
-        visibleGuessesStatistics: searchedStatistic,
       ),
-    );
+    ));
   }
 }

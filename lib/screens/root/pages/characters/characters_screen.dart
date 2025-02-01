@@ -7,8 +7,36 @@ import 'package:harry_potter/screens/blocs/guess_character_house_bloc/guess_char
 import 'widgets/character_statistic_tile.dart';
 
 @RoutePage()
-class CharactersScreen extends StatelessWidget {
+class CharactersScreen extends StatefulWidget {
   const CharactersScreen({super.key});
+
+  @override
+  State<CharactersScreen> createState() => _CharactersScreenState();
+}
+
+class _CharactersScreenState extends State<CharactersScreen> {
+  late final TextEditingController _searchController;
+
+  @override
+  void initState() {
+    super.initState();
+    final guessCharacterBloc = context.read<GuessCharacterHouseBloc>();
+
+    _searchController = TextEditingController(
+      text: guessCharacterBloc.state.searchQuery,
+    )..addListener(
+        () {
+          guessCharacterBloc
+              .searchStatisticByName(_searchController.value.text);
+        },
+      );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +47,7 @@ class CharactersScreen extends StatelessWidget {
             ConstrainedBox(
               constraints: BoxConstraints(maxWidth: 360),
               child: TextField(
+                controller: _searchController,
                 decoration: InputDecoration(
                   hintText: 'Search by name',
                   border: OutlineInputBorder(
